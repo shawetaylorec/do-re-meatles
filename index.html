@@ -635,11 +635,16 @@ function audio(){
   return ac;
 }
 function hz(m){ return 440*Math.pow(2,(m-69)/12); }
+/* Everything sounds an octave below the written pitch. The songbook's melodies are
+   written up in the treble staff, but the records sit lower, closer to where most
+   people actually sing them. The notation is left as written. */
+var SOUND_SHIFT = -12;
 function track(o, g){
   live.push([o,g]);
   o.onended = function(){ var i = live.findIndex(function(p){ return p[0]===o; }); if (i>=0) live.splice(i,1); };
 }
 function tone(midi, at, dur, vol){
+  midi += SOUND_SHIFT;
   var c=audio(), t0=c.currentTime+at, t1=t0+dur;
   var o=c.createOscillator(), g=c.createGain(), lp=c.createBiquadFilter();
   o.setPeriodicWave(wave); o.frequency.value=hz(midi);
@@ -656,8 +661,12 @@ function tone(midi, at, dur, vol){
 /* The do drone: a soft, steady tonic under the whole phrase, swelling in gently so
    it reads as a reference pitch rather than another note to sing. */
 function drone(midi, at, dur){
+  midi += SOUND_SHIFT;
   var c=audio(), t0=c.currentTime+at, t1=t0+dur;
-  [[midi,"sawtooth",0.045,700],[midi-12,"sine",0.07,400]].forEach(function(v){
+  /* the sub-octave would be too low for a phone speaker once shifted; keep it above C2 */
+  var voices = [[midi,"sawtooth",0.045,700]];
+  if (midi - 12 >= 36) voices.push([midi-12,"sine",0.07,400]);
+  voices.forEach(function(v){
     var o=c.createOscillator(), g=c.createGain(), lp=c.createBiquadFilter();
     o.type=v[1]; o.frequency.value=hz(v[0]);
     lp.type="lowpass"; lp.frequency.value=v[3];

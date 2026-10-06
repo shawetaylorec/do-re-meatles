@@ -3,7 +3,7 @@
    VERSION is stamped by tools/stamp.sh from a hash of the app's content, so a new
    deploy gets a new cache name and existing installs pick up the update.
    Your own phrases live in localStorage, not in this cache, so updates never touch them. */
-const VERSION = "5d3378aab3";
+const VERSION = "e7f74d7467";
 const CACHE = "drm-" + VERSION;
 const ASSETS = [
   "./",
