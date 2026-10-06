@@ -1,0 +1,5 @@
+.build/
+*.log
+# personal transcriptions from a purchased songbook - never publish
+data/private.js
+*.private.json

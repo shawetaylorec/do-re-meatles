@@ -1,0 +1,17 @@
+{
+  "name": "Do Re Meatles",
+  "short_name": "Do Re Me",
+  "description": "Sight-singing trainer: see a melody with its lyrics, then flip to do-re-mi and intervals",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3ede2",
+  "theme_color": "#f3ede2",
+  "categories": ["education", "music"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

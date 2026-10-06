@@ -1,0 +1,113 @@
+<!doctype html><meta charset=utf-8><title>Do Re Meatles tests</title>
+<!-- Open in a browser, or headless:  chrome --headless=new --allow-file-access-from-files
+     --virtual-time-budget=4000 --dump-dom tools/test.html   and read the <pre>. -->
+<iframe id=f src="../index.html" style="width:900px;height:700px"></iframe>
+<pre id=out>running…</pre>
+<script>
+document.getElementById("f").onload = function(){
+  var W = this.contentWindow, T = W.__T, B = W.DRM_BUILTIN, out = [], fails = 0;
+  function eq(name, got, want){
+    var ok = JSON.stringify(got) === JSON.stringify(want);
+    if (!ok) fails++;
+    out.push((ok ? "ok   " : "FAIL ") + name + (ok ? "" : "\n       got  " + JSON.stringify(got) + "\n       want " + JSON.stringify(want)));
+  }
+  function ph(id){ return B.filter(function(p){ return p.id === id; })[0]; }
+  function P(notes, key, meter, lyrics){ return T.prep({notes:notes, key:key||"C", meter:meter||"4/4", lyrics:lyrics||""}); }
+  function mids(X){ return X.notes.map(function(n){ return n.midi; }); }
+  function durs(X){ return X.ev.map(function(n){ return Math.round(n.dur*1000)/1000; }); }
+
+  // every built-in parses cleanly, and its lyrics fill exactly its sung notes
+  B.concat(W.DRM_PRIVATE || []).forEach(function(p){
+    var X = T.prep(p);
+    eq(p.id+" no errors", X.errors, []);
+    eq(p.id+" lyrics fit", X.slots, X.sounding);
+    eq(p.id+" no accidentals", X.accidentals, false);
+  });
+
+  var tw = T.prep(ph("pd-twinkle"));
+  eq("twinkle solfa", tw.sol, "do do sol sol la la sol fa fa mi mi re re do");
+  eq("twinkle intervals", tw.ivs, "· = ↑P5 = ↑M2 = ↓M2 ↓M2 = ↓m2 = ↓M2 = ↓M2");
+  eq("twinkle midi", mids(tw).slice(0,4), [60,60,67,67]);
+
+  var ode = T.prep(ph("pd-ode"));
+  eq("ode solfa (D major)", ode.sol, "mi mi fa sol sol fa mi re do do re mi mi re re");
+  eq("ode F is F#", ode.notes[0].midi, 66);
+  eq("ode dotted rhythm", durs(ode).slice(-3), [3,1,4]);
+
+  var st = T.prep(ph("pd-saints"));
+  eq("saints pickup (3 beats)", st.pickup, 6);
+  eq("saints tie leaves a blank", st.lyr, "Oh when the saints * go march- ing in");
+  eq("saints solfa blank on tie", st.sol, "do mi fa sol * do mi fa sol");
+  eq("saints Bb from key sig", st.notes[2].midi, 70);
+  var ci = T.countIn(st);
+  eq("saints count-in lead", ci.lead, 10);
+  eq("saints count-in clicks", ci.clicks.map(function(c){ return [c.u, c.accent]; }),
+     [[0,true],[2,false],[4,false],[6,false],[8,true]]);
+
+  var gr = T.prep(ph("pd-grace"));
+  eq("grace pickup (1 beat of 3/4)", gr.pickup, 2);
+  eq("grace solfa", gr.sol, "sol do mi do mi re do la, sol sol do mi do mi re sol".replace("la,","la"));
+  eq("grace count-in", T.countIn(gr).lead, 10);
+
+  eq("no pickup count-in", T.countIn(tw).lead, 8);
+  eq("6/8 count-in beats", T.countIn(P("c3 d3 | e6 |]", "C", "6/8")).clicks.map(function(c){ return c.u; }), [0,3]);
+
+  // intervals by spelling
+  function iv(a, b, key){ var X = P(a+" "+b, key||"C"); return X.ivs.split(" ")[1]; }
+  eq("C-E", iv("C","E"), "↑M3");
+  eq("E-C", iv("E","C"), "↓M3");
+  eq("B-f", iv("B","f"), "↑d5");
+  eq("F-B", iv("F","B"), "↑A4");
+  eq("C-c", iv("C","c"), "↑P8");
+  eq("C-d", iv("C","d"), "↑M9");
+  eq("A-c", iv("A","c"), "↑m3");
+  eq("E-F", iv("E","F"), "↑m2");
+  eq("G,-C", iv("G,","C"), "↑P4");
+  eq("D-B", iv("D","B"), "↑M6");
+  eq("C-_B", iv("C","_B"), "↑m7");
+
+  // chromatic syllables
+  eq("fi and te", P("C ^F G _B c").sol, "do fi sol te do");
+  eq("accidental carries through bar", mids(P("^c c | c")), [73,73,72]);
+  eq("natural cancels key sig", mids(P("F =F", "G")), [66,65]);
+  eq("octave marks", mids(P("C, C c c'")), [48,60,72,84]);
+
+  // rhythm
+  eq("lengths", durs(P("C C2 C/ C3/2 C// z2")), [1,2,0.5,1.5,0.25,2]);
+  eq("dotted pair", durs(P("C>D C<D")), [1.5,0.5,0.5,1.5]);
+  eq("triplet", durs(P("(3CDE F")), [0.667,0.667,0.667,1]);
+  eq("L:1/4 unit", T.prep({notes:"L:1/4\nC D E2", key:"C", meter:"4/4"}).ev.map(function(e){return e.dur;}), [2,2,4]);
+  eq("rest not sung", P("C z D", "C", "4/4", "a b").lyr, "a b");
+  eq("chords refused", P("[CEG]").errors.length > 0, true);
+  eq("chord symbols skipped", mids(P('"G"G "C"c')), [67,72]);
+  eq("ending markers", P("C D |1 E F :|2 G A |]").errors, []);
+
+  // lyric tokens
+  eq("slots", T.lyricSlots("Twin-kle twin-kle lit-tle"), ["Twin-","kle","twin-","kle","lit-","tle"]);
+  eq("slots hold/skip", T.lyricSlots("A-ma-zing_ grace * now"), ["A-","ma-","zing","_","grace","*","now"]);
+  eq("slots escaped hyphen", T.lyricSlots("well\\-known x"), ["well\\-known","x"]);
+
+  // line breaking: upbeat rides with the first line, labels split with their notes
+  var sn = T.prep(ph("pd-saints")), A2 = T.abcFor(sn, "solfa", 2).split("\n");
+  eq("2 bars a line, upbeat kept", A2.filter(function(l){ return /\|/.test(l) && !/^w:/.test(l); }),
+     ["F2 A2 B2 | c8- | c2 F2 A2 B2 |", "c8 |]"]);
+  eq("labels follow their line", A2.filter(function(l){ return /^w:/.test(l); }), ["w:do mi fa sol * do mi fa", "w:sol"]);
+  eq("one line when it fits", T.abcFor(sn, "all", 4).split("\n").filter(function(l){ return /^w:/.test(l); }).length, 3);
+  eq("repeat and ending barlines survive", T.abcFor(P("C4 D4 :|2 E4 F4 |]"), "solfa", 1).split("\n").filter(function(l){ return /\|/.test(l); }),
+     ["C4 D4 :|2", "E4 F4 |]"]);
+
+  // pasted ABC
+  var H = T.parseHeaders("X:1\nT:Test tune\nM:3/4\nL:1/4\nK:Em\nE G B |\nw:a b c");
+  eq("headers", [H.key, H.meter, H.unit, H.title, H.lyrics, H.body], ["G","3/4",0.25,"Test tune",["a b c"],["E G B |"]]);
+  eq("minor la-based", T.prep({notes:"K:Am\nA, B, C", key:"C", meter:"4/4"}).sol, "la ti do");
+
+  // the page itself rendered, with one SVG note per written note
+  var doc = W.document;
+  // a fresh profile opens on the first phrase: songbook if present, else the examples
+  var opened = (W.DRM_PRIVATE && W.DRM_PRIVATE[0]) || B[0];
+  eq("page drew notes", doc.querySelectorAll("#score .abcjs-note").length, T.prep(opened).notes.length);
+
+  out.unshift(fails ? fails + " FAILED" : "ALL PASSED");
+  document.getElementById("out").textContent = out.join("\n");
+};
+</script>
