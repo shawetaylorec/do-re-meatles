@@ -2,8 +2,9 @@
 
 ### ▶ [**Open the trainer**](https://shawetaylorec.github.io/do-re-meatles/) — shawetaylorec.github.io/do-re-meatles
 
-A sight-singing trainer for learning to hear a melody in **solfège**. It shows a short
-phrase from a song you already know, written out as music with the words underneath.
+A sight-singing trainer for learning to hear a melody in **solfège**, using Beatles songs.
+It shows a short phrase from a song you already know, written out as music with the words
+underneath.
 Then you flip the words for:
 
 - **Do-re-mi**: the movable-do syllable for every note (do = the key note)
@@ -49,12 +50,20 @@ Phrases you add live **only on your device**, in the browser's storage. Use
 **Settings → Export my phrases** now and then to keep a backup, and **Import…** to
 move them to another device.
 
-## Songbook phrases (personal use)
+## Where the songs come from (personal use)
 
-The app also loads `data/private.js` if it exists. That file holds phrases transcribed
-from a songbook I own, for my own practice. It is **gitignored and never published**,
-so the live site only has the public-domain examples. To get the same phrases on a
-phone, import the matching `*.private.json` export via **Settings → Import…**.
+The published app ships with **no songs**. A fresh install says *No songs yet* and asks
+you to import a phrases file. The songs come from a Beatles songbook I own, for my own
+practice:
+
+- `.build/omr/` (gitignored) holds the pipeline. Audiveris optical music recognition
+  reads each scanned page. A script takes the melody (the top line of the treble staff),
+  matches the recognised lyric words to notes by position, and keeps the first phrase on
+  each page that passes every check: complete bars, printed accidentals and key
+  signature agree, every sung note has a syllable, and the range is singable.
+- It writes `data/private.js`, which the app loads locally when present, and
+  `~/Downloads/do-re-meatles-songbook.private.json` for **Settings → Import…** on a
+  phone. Both are **gitignored and never published**.
 
 ## Install it on your phone
 
@@ -77,6 +86,5 @@ No build step. Open `index.html`, or serve the folder with any static server.
 
 ## Credits
 
-Notation by [abcjs](https://abcjs.net) (MIT). Built-in examples are public domain:
-*Twinkle, Twinkle* (Jane Taylor, 1806), *Frère Jacques*, *Ode to Joy* (Beethoven,
-words Henry van Dyke, 1907), *When the Saints*, *Amazing Grace* (John Newton, 1779).
+Notation by [abcjs](https://abcjs.net) (MIT). The test phrases in `tools/test-phrases.js`
+are public domain.

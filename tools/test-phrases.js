@@ -1,4 +1,4 @@
-// Do Re Meatles - built-in example phrases.
+// Do Re Meatles - public-domain phrases used by tools/test.html (not shipped in the app).
 // Every one of these is in the public domain, words and music. Your own phrases are
 // added in the app and live only on your device; they are never part of this file.
 //

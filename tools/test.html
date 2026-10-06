@@ -1,11 +1,12 @@
 <!doctype html><meta charset=utf-8><title>Do Re Meatles tests</title>
 <!-- Open in a browser, or headless:  chrome --headless=new --allow-file-access-from-files
      --virtual-time-budget=4000 --dump-dom tools/test.html   and read the <pre>. -->
+<script src="test-phrases.js"></script>
 <iframe id=f src="../index.html" style="width:900px;height:700px"></iframe>
 <pre id=out>running…</pre>
 <script>
 document.getElementById("f").onload = function(){
-  var W = this.contentWindow, T = W.__T, B = W.DRM_BUILTIN, out = [], fails = 0;
+  var W = this.contentWindow, T = W.__T, B = window.DRM_BUILTIN, out = [], fails = 0;
   function eq(name, got, want){
     var ok = JSON.stringify(got) === JSON.stringify(want);
     if (!ok) fails++;
@@ -21,7 +22,7 @@ document.getElementById("f").onload = function(){
     var X = T.prep(p);
     eq(p.id+" no errors", X.errors, []);
     eq(p.id+" lyrics fit", X.slots, X.sounding);
-    eq(p.id+" no accidentals", X.accidentals, false);
+    if (!/^sb-p/.test(p.id)) eq(p.id+" no accidentals", X.accidentals, false);   // songbook phrases may have them
   });
 
   var tw = T.prep(ph("pd-twinkle"));
@@ -104,8 +105,9 @@ document.getElementById("f").onload = function(){
   // the page itself rendered, with one SVG note per written note
   var doc = W.document;
   // a fresh profile opens on the first phrase: songbook if present, else the examples
-  var opened = (W.DRM_PRIVATE && W.DRM_PRIVATE[0]) || B[0];
-  eq("page drew notes", doc.querySelectorAll("#score .abcjs-note").length, T.prep(opened).notes.length);
+  var opened = W.DRM_PRIVATE && W.DRM_PRIVATE[0];
+  if (opened) eq("page drew notes", doc.querySelectorAll("#score .abcjs-note").length, T.prep(opened).notes.length);
+  else eq("empty app asks for an import", /No songs yet/.test(doc.getElementById("score").textContent), true);
 
   out.unshift(fails ? fails + " FAILED" : "ALL PASSED");
   document.getElementById("out").textContent = out.join("\n");

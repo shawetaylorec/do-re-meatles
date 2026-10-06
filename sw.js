@@ -3,13 +3,12 @@
    VERSION is stamped by tools/stamp.sh from a hash of the app's content, so a new
    deploy gets a new cache name and existing installs pick up the update.
    Your own phrases live in localStorage, not in this cache, so updates never touch them. */
-const VERSION = "d0be40b9bb";
+const VERSION = "5d3378aab3";
 const CACHE = "drm-" + VERSION;
 const ASSETS = [
   "./",
   "./index.html",
   "./vendor/abcjs-basic-min.js",
-  "./data/phrases.js",
   "./manifest.webmanifest",
   "./icons/icon-180.png",
   "./icons/icon-192.png",

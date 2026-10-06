@@ -5,6 +5,6 @@
 #   usage: bash tools/stamp.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
-V=$(cat index.html vendor/abcjs-basic-min.js data/phrases.js manifest.webmanifest | sha1sum | cut -c1-10)
+V=$(cat index.html vendor/abcjs-basic-min.js manifest.webmanifest | sha1sum | cut -c1-10)
 sed -i "s/^const VERSION = .*/const VERSION = \"$V\";/" sw.js
 echo "service worker version $V"
